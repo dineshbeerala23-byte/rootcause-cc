@@ -1,0 +1,39 @@
+# ============================================
+# RootCause-CC
+# Files that should NOT be tracked by Git
+# ============================================
+
+# Environment variables / API secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Python caches
+.pytest_cache/
+.mypy_cache/
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local ML model artifacts
+*.pkl
+*.joblib
