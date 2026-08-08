@@ -1,0 +1,4 @@
+time,service,message
+1700000000,orders,order created
+1700000250,orders,checkout initiated
+1700050000,orders,elevated response time observed - excluded from any diagnostic window

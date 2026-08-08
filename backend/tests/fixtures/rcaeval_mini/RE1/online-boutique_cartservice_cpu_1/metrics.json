@@ -1,0 +1,5 @@
+[
+  {"time": 1700000000, "service": "cartservice", "cpu_usage_pct": 10.0},
+  {"time": 1700000200, "service": "cartservice", "cpu_usage_pct": 55.0},
+  {"time": 1700100000, "service": "cartservice", "cpu_usage_pct": 99.0}
+]

@@ -1,0 +1,5 @@
+[
+  {"time": 1700000000, "service": "orders", "response_latency_ms": 120},
+  {"time": 1700000250, "service": "orders", "response_latency_ms": 800},
+  {"time": 1700050000, "service": "orders", "response_latency_ms": 5000}
+]
