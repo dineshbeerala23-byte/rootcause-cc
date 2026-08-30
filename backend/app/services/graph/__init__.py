@@ -1,0 +1,1 @@
+"""Static service-dependency topology for the three RCAEval systems (v1: plain Python/Pydantic, no Neo4j)."""
