@@ -37,7 +37,7 @@ from app.services.llm.groq_provider import GroqProvider
 from app.services.pipeline.service import RCAPipelineService
 from app.services.reasoning.llm_reasoner import LLMRationaleAnnotator
 from app.services.reasoning.service import RCAReasoningService
-
+from app.services.evaluation.service import EvaluationService
 
 def _get_adapter() -> DatasetAdapter:
     return RCAEvalAdapter(settings=get_settings())
@@ -131,6 +131,29 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     print(response.model_dump_json(indent=2))
     return 0
 
+def cmd_evaluate(args: argparse.Namespace) -> int:
+    adapter = _get_adapter()
+    cases = adapter.list_cases()
+
+    if args.suite is not None:
+        cases = [c for c in cases if c.dataset_suite == args.suite]
+    if args.system is not None:
+        cases = [c for c in cases if c.system == args.system]
+    if args.max_cases is not None:
+        cases = cases[: args.max_cases]
+
+    if not cases:
+        print("No cases found.", file=sys.stderr)
+        return 0
+
+    case_ids = [c.case_id for c in cases]
+    pipeline_service = _build_pipeline_service()
+    evaluation_service = EvaluationService(adapter=adapter, pipeline_service=pipeline_service)
+
+    run_result = asyncio.run(evaluation_service.evaluate_cases(case_ids, mode=args.mode))
+    print(run_result.model_dump_json(indent=2))
+    return 0
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -167,6 +190,20 @@ def build_parser() -> argparse.ArgumentParser:
         "generation always uses the LLM regardless of this setting.",
     )
     p_analyze.set_defaults(func=cmd_analyze)
+
+    p_evaluate = subparsers.add_parser(
+        "evaluate", help="Run evaluation (predicted_rank/top-k/grounding precision-recall) over cases."
+    )
+    p_evaluate.add_argument("--suite", choices=["RE1", "RE2", "RE3"], default=None)
+    p_evaluate.add_argument("--system", choices=["online-boutique", "sock-shop", "train-ticket"], default=None)
+    p_evaluate.add_argument("--max-cases", type=int, default=None, dest="max_cases")
+    p_evaluate.add_argument(
+        "--mode",
+        choices=["deterministic", "llm-assisted"],
+        default="deterministic",
+        help="Reasoning mode used when running the pipeline for each case being evaluated.",
+    )
+    p_evaluate.set_defaults(func=cmd_evaluate)
 
     return parser
 
