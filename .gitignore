@@ -37,3 +37,6 @@ Thumbs.db
 # Local ML model artifacts
 *.pkl
 *.joblibbackend.zip
+
+# Real RCAEval dataset (downloaded locally, not tracked)
+data/rcaeval-data/
