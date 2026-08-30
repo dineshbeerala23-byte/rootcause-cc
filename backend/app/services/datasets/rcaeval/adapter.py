@@ -138,29 +138,34 @@ class RCAEvalAdapter(DatasetAdapter):
         case_dir: Path = self._discovery.get_case_dir(case_id)
         raw_case = RCAEvalRawCase(case_dir)
 
-        suite = case_dir.parent.name
-        if suite not in _KNOWN_SUITES:
-            raise DatasetError(
-                f"Unrecognized suite folder {suite!r} for case_id={case_id!r}."
-            )
+        # Discovery is the single source of truth for suite/system metadata.
+        # This works for both:
+        #   - synthetic nested layout: RE1/<system>_...
+        #   - real flat layout: re1ob_..., re1ss_..., re1tt_...
+        metadata_matches = [
+            metadata
+            for metadata in self._discovery.list_cases()
+            if metadata.case_id == case_id
+        ]
 
-        system = _parse_system_from_dir_name(case_dir.name)
+        if not metadata_matches:
+            raise DatasetCaseNotFoundError(case_id)
 
-        metadata = CaseMetadata(
-            case_id=case_id,
-            dataset_suite=suite,  # type: ignore[arg-type]
-            system=system,
-            available_modalities=ModalityAvailability(
-                metrics=raw_case.has_metrics(),
-                logs=raw_case.has_logs(),
-                traces=raw_case.has_traces(),
-            ),
+        metadata = metadata_matches[0]
+
+        inject_time_dt = datetime.fromtimestamp(
+            raw_case.load_inject_time(),
+            tz=timezone.utc,
+        )
+        diagnostic_window = DiagnosticWindow(
+            inject_time=inject_time_dt,
+            as_of=None,
         )
 
-        inject_time_dt = datetime.fromtimestamp(raw_case.load_inject_time(), tz=timezone.utc)
-        diagnostic_window = DiagnosticWindow(inject_time=inject_time_dt, as_of=None)
-
-        return NormalizedIncident(metadata=metadata, diagnostic_window=diagnostic_window)
+        return NormalizedIncident(
+            metadata=metadata,
+            diagnostic_window=diagnostic_window,
+        )
 
     def get_telemetry_summary(
         self, case_id: str, window: DiagnosticWindow
