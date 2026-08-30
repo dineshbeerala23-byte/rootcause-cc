@@ -11,3 +11,4 @@ groq>=0.11,<1.0
 # Testing (TestClient requires httpx as of Starlette >= 0.36)
 httpx>=0.27,<1.0
 pytest>=8.0,<9.0
+pyarrow
