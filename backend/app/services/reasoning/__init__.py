@@ -1,0 +1,1 @@
+"""RCA Candidate Reasoning layer -- deterministic ranking plus optional LLM-authored rationale."""
