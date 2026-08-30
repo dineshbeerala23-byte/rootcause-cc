@@ -7,11 +7,18 @@ Run with:
 Thin by design, same convention as app/api/v1/endpoints/datasets.py: this
 module only formats output. All dataset logic lives in
 app.services.datasets.rcaeval.*. Same leakage rules as the API layer:
-opaque case IDs only, no raw directory names, no ground truth — this CLI
+opaque case IDs only, no raw directory names, no ground truth -- this CLI
 intentionally has no "ground-truth" or "answer" command.
+
+`analyze` (NEW -- Evidence-Grounded RCA Pipeline API/CLI wiring milestone)
+runs the full incident -> FinalRCAResult pipeline via
+app.services.pipeline.service.RCAPipelineService, using the exact same
+orchestration the API endpoint uses. Additive only; the three original
+commands (list/inspect/process) are unchanged.
 """
 
 import argparse
+import asyncio
 import json
 import sys
 from typing import Optional
@@ -19,8 +26,17 @@ from typing import Optional
 from app.core.config import get_settings
 from app.core.exceptions import RootCauseError
 from app.schemas.telemetry import TelemetryQuery
+from app.services.claims.llm_generator import LLMClaimGenerator
+from app.services.claims.service import ClaimVerificationService
 from app.services.datasets.base import DatasetAdapter
 from app.services.datasets.rcaeval.adapter import RCAEvalAdapter
+from app.services.evidence.service import EvidenceRetrievalService
+from app.services.final_result.service import FinalResultAssemblyService
+from app.services.graph.provider import StaticTopologyProvider
+from app.services.llm.groq_provider import GroqProvider
+from app.services.pipeline.service import RCAPipelineService
+from app.services.reasoning.llm_reasoner import LLMRationaleAnnotator
+from app.services.reasoning.service import RCAReasoningService
 
 
 def _get_adapter() -> DatasetAdapter:
@@ -79,6 +95,43 @@ def cmd_process(args: argparse.Namespace) -> int:
     return 0
 
 
+def _build_pipeline_service() -> RCAPipelineService:
+    settings = get_settings()
+    adapter = _get_adapter()
+    evidence_service = EvidenceRetrievalService(adapter)
+    topology_provider = StaticTopologyProvider()
+    llm_provider = GroqProvider(
+        api_key=settings.GROQ_API_KEY,
+        model=settings.GROQ_MODEL,
+        timeout=settings.LLM_TIMEOUT,
+        max_retries=settings.LLM_MAX_RETRIES,
+    )
+    reasoning_service = RCAReasoningService(
+        evidence_service,
+        topology_provider,
+        rationale_annotator=LLMRationaleAnnotator(llm_provider),
+    )
+    claims_service = ClaimVerificationService(claim_generator=LLMClaimGenerator(llm_provider))
+    final_result_service = FinalResultAssemblyService()
+
+    return RCAPipelineService(
+        adapter=adapter,
+        evidence_service=evidence_service,
+        topology_provider=topology_provider,
+        reasoning_service=reasoning_service,
+        claims_service=claims_service,
+        final_result_service=final_result_service,
+        llm_provider=llm_provider,
+    )
+
+
+def cmd_analyze(args: argparse.Namespace) -> int:
+    pipeline_service = _build_pipeline_service()
+    response = asyncio.run(pipeline_service.analyze(args.case_id, mode=args.mode))
+    print(response.model_dump_json(indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m app.cli.rcaeval_cli",
@@ -101,6 +154,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_process.add_argument("--service", default=None, help="Filter to one service name.")
     p_process.add_argument("--max-rows", type=int, default=20, dest="max_rows")
     p_process.set_defaults(func=cmd_process)
+
+    p_analyze = subparsers.add_parser(
+        "analyze", help="Run the full evidence-grounded RCA pipeline for a case."
+    )
+    p_analyze.add_argument("case_id", help="Opaque case ID, e.g. case-0001")
+    p_analyze.add_argument(
+        "--mode",
+        choices=["deterministic", "llm-assisted"],
+        default="deterministic",
+        help="Reasoning mode -- controls candidate rationale only; claim "
+        "generation always uses the LLM regardless of this setting.",
+    )
+    p_analyze.set_defaults(func=cmd_analyze)
 
     return parser
 
