@@ -18,8 +18,19 @@ def _deviation_score(series: pd.Series) -> float:
     "How much did this signal move" score -- a signal-movement/change
     ranking heuristic ONLY, not an RCA or root-cause detector. Compares
     the mean of the last quarter of the given series against the mean
-    of the first quarter, normalized by the early-window standard
-    deviation. Never looks outside the series it's handed.
+    of the first quarter, normalized by a POOLED standard deviation
+    across both the early and late windows. Never looks outside the
+    series it's handed.
+
+    Pooled (not early-window-only) variance is used deliberately: an
+    early-window-only denominator collapses toward the epsilon floor
+    whenever the early quarter happens to be flat/near-constant (e.g.
+    quantized baseline memory readings), producing scores many orders
+    of magnitude larger than any other metric purely as an artifact of
+    which quarter was used as "baseline" -- not because of a stronger
+    underlying signal. Pooling both windows only produces a near-zero
+    denominator when the ENTIRE compared span is flat, which is a much
+    rarer and more legitimately near-zero-signal condition.
     """
     n = len(series)
     if n == 0:
@@ -34,11 +45,36 @@ def _deviation_score(series: pd.Series) -> float:
     early_mean = early.mean()
     late_mean = late.mean()
     early_std = early.std(ddof=0)
+    late_std = late.std(ddof=0)
     if pd.isna(early_std):
         early_std = 0.0
+    if pd.isna(late_std):
+        late_std = 0.0
 
-    return float(abs(late_mean - early_mean) / (early_std + _EPSILON))
+    mean_shift = abs(late_mean - early_mean)
 
+    if early_std == 0.0 and late_std == 0.0:
+        # No variability in EITHER window to normalize against at all --
+        # this is the flat-to-flat regime (e.g. a quantized metric moving
+        # from one exact plateau to another with zero jitter in both
+        # windows). Dividing by an arbitrary epsilon here has no
+        # principled scale and was the source of the observed
+        # trillions-scale scores. Fall back to a relative (magnitude-
+        # normalized) change measure instead: mean shift as a fraction
+        # of the larger window's own level. This is bounded, dimensionless,
+        # and comparable across metric types, the same role the pooled-std
+        # ratio plays when real variance exists -- it's just normalized by
+        # signal level instead of signal noise, since no noise floor
+        # exists in this branch. When exactly one window has zero
+        # variance (not both), no special case is needed: the pooled
+        # formula below already stays well-conditioned in that case,
+        # since pooled_std reduces to nonzero_std/sqrt(2).
+        scale = max(abs(early_mean), abs(late_mean))
+        return float(mean_shift / (scale + _EPSILON))
+
+    pooled_std = ((early_std**2 + late_std**2) / 2) ** 0.5
+
+    return float(mean_shift / (pooled_std + _EPSILON))
 
 class EvidenceRetrievalService:
     """

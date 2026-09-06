@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, Tuple
 
 _KNOWN_METRIC_SUFFIXES = sorted(
-    ["cpu", "mem", "load", "latency", "error"],
+    ["cpu", "mem", "load", "latency", "latency-50", "latency-90", "workload", "error"],
     key=len,
     reverse=True,
 )
