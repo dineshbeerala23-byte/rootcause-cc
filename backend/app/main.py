@@ -1,21 +1,23 @@
-"""
-RootCause-CC — application entrypoint.
+﻿"""
+RootCause-CC â€” application entrypoint.
 
 Run with:
     uvicorn app.main:app --reload
 
 This module wires together configuration, logging, middleware, exception
 handlers, and versioned API routing. It intentionally contains no business
-logic — that belongs in later phases' modules under app/, imported and
+logic â€” that belongs in later phases' modules under app/, imported and
 mounted here.
 """
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.router import api_router
@@ -74,6 +76,8 @@ def create_app() -> FastAPI:
     application.add_exception_handler(Exception, unhandled_exception_handler)
 
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
+    frontend_dir = Path(__file__).resolve().parents[2] / "frontend"
+    application.mount("/ui", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
     @application.get("/", tags=["Root"], summary="API root")
     async def root() -> dict:

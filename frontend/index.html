@@ -1,0 +1,523 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROOTCAUSE-CC // THE HAUNTED STACK</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --void:#08070d;
+  --panel:#13101b;
+  --panel2:#1b1423;
+  --line:#39233f;
+  --red:#ff3155;
+  --acid:#c5ff41;
+  --purple:#bc6bff;
+  --cyan:#64f5ff;
+  --white:#f8edff;
+  --muted:#a59aaf;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0;
+  color:var(--white);
+  font-family:'Space Grotesk',sans-serif;
+  background:
+    radial-gradient(ellipse at 10% 5%,#4b133033,transparent 32%),
+    radial-gradient(ellipse at 95% 45%,#40146a2a,transparent 35%),
+    repeating-linear-gradient(0deg,#ffffff03 0px,#ffffff03 1px,transparent 1px,transparent 4px),
+    var(--void);
+  min-height:100vh;
+}
+body:before {
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:10;
+  opacity:.12;
+  background:repeating-linear-gradient(0deg,transparent 0px,transparent 3px,#000 4px);
+}
+a { color:var(--cyan); }
+button,select { font:inherit; }
+header {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:14px;
+  padding:18px 5%;
+  border-bottom:1px solid var(--line);
+  background:#0b0811e8;
+  position:sticky; top:0; z-index:5;
+  backdrop-filter:blur(14px);
+}
+.logo { font-weight:700; font-size:20px; letter-spacing:1px; }
+.logo .blood { color:var(--red); text-shadow:0 0 15px #ff315577; }
+.logo small {
+  display:block; font:11px 'Share Tech Mono',monospace;
+  color:var(--acid); letter-spacing:3px; margin-top:3px;
+}
+.status {
+  font:12px 'Share Tech Mono',monospace;
+  color:var(--acid); border:1px solid #c5ff4155;
+  padding:8px 12px; background:#c5ff410c;
+}
+main { max-width:1250px; margin:auto; padding:35px 22px 65px; }
+.hero {
+  position:relative; overflow:hidden;
+  border:1px solid var(--line);
+  padding:clamp(23px,5vw,52px);
+  background:linear-gradient(125deg,#211020ee,#100e19f5 65%,#201025);
+  box-shadow:8px 8px 0 #35152a;
+}
+.hero:after {
+  content:"☠";
+  position:absolute; right:4%; top:0;
+  font-size:clamp(100px,20vw,230px);
+  color:#ff315510; transform:rotate(14deg);
+  pointer-events:none;
+}
+.kicker {
+  color:var(--acid); font:12px 'Share Tech Mono',monospace;
+  letter-spacing:3px; text-transform:uppercase;
+}
+h1 {
+  font-size:clamp(38px,7vw,78px); line-height:.98;
+  letter-spacing:-3px; margin:20px 0;
+  max-width:780px; position:relative; z-index:1;
+  text-transform:uppercase;
+}
+h1 .glitch { color:var(--red); text-shadow:3px 0 #8c2dff,-2px 0 #ff315555; }
+.subtitle { max-width:650px; color:#c0b1ca; line-height:1.8; }
+.stickers { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+.sticker {
+  padding:8px 12px; font-size:11px; font-weight:700;
+  transform:rotate(-2deg); border:2px solid #08070d;
+  color:#08070d; background:var(--acid);
+  box-shadow:3px 3px 0 #7dff7b;
+}
+.sticker:nth-child(2) { background:var(--red); transform:rotate(2deg); box-shadow:3px 3px 0 #7e1731; }
+.sticker:nth-child(3) { background:var(--purple); transform:rotate(-1deg); box-shadow:3px 3px 0 #60218a; }
+.stats {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px; margin:25px 0;
+}
+.stat {
+  border:1px solid var(--line); background:var(--panel);
+  padding:19px; position:relative; overflow:hidden;
+}
+.stat:after {
+  content:""; position:absolute; height:3px;
+  bottom:0; left:0; width:100%; background:var(--purple);
+}
+.stat:nth-child(2):after { background:var(--acid); }
+.stat:nth-child(3):after { background:var(--red); }
+.stat label {
+  color:var(--muted); font:11px 'Share Tech Mono',monospace;
+  text-transform:uppercase; letter-spacing:1px;
+}
+.stat strong { display:block; font-size:30px; margin-top:7px; }
+.workspace {
+  display:grid; grid-template-columns:340px minmax(0,1fr);
+  gap:18px; align-items:start;
+}
+.panel {
+  min-width:0; padding:22px;
+  background:linear-gradient(145deg,#17121f,#0e0b14);
+  border:1px solid var(--line);
+  box-shadow:5px 5px 0 #201225;
+}
+.panel-title {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin-bottom:18px;
+}
+h2 { margin:0; font-size:19px; }
+.tag {
+  font:10px 'Share Tech Mono',monospace; color:var(--purple);
+  border:1px solid #bc6bff55; padding:5px 8px;
+}
+.desc { color:var(--muted); font-size:13px; line-height:1.7; }
+label {
+  display:block; color:var(--cyan);
+  font:11px 'Share Tech Mono',monospace;
+  text-transform:uppercase; letter-spacing:1px;
+  margin:20px 0 8px;
+}
+select {
+  width:100%; padding:13px;
+  color:var(--white); background:#090810;
+  border:1px solid #47304e; border-radius:2px;
+  outline:none;
+}
+select:focus { border-color:var(--acid); box-shadow:0 0 0 2px #c5ff411c; }
+button {
+  width:100%; padding:15px 12px; margin-top:22px;
+  border:0; background:var(--red); color:white;
+  font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; box-shadow:4px 4px 0 #68172a;
+  transition:transform .15s,filter .15s;
+}
+button:hover:not(:disabled) { transform:translate(-2px,-2px); filter:brightness(1.18); }
+button:disabled { opacity:.5; cursor:not-allowed; }
+.note { font-size:11px; color:var(--muted); line-height:1.6; margin-top:14px; }
+.message { font:12px 'Share Tech Mono',monospace; color:var(--acid); margin-top:15px; overflow-wrap:anywhere; }
+.error { color:#ff7a8e!important; }
+.result-top {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:10px; flex-wrap:wrap; margin-bottom:14px;
+}
+.case-pill {
+  color:var(--cyan); font:11px 'Share Tech Mono',monospace;
+  padding:6px 9px; border:1px solid #64f5ff44;
+  overflow-wrap:anywhere;
+}
+.empty {
+  text-align:center; padding:48px 15px;
+  border:1px dashed #49334d; color:var(--muted);
+  background:#09081077;
+}
+.empty .emoji { font-size:48px; display:block; margin-bottom:12px; }
+.candidate {
+  padding:17px; margin-top:13px;
+  border:1px solid #3b2944; background:#100d18;
+  position:relative;
+}
+.candidate:first-child { border-top:2px solid var(--acid); }
+.candidate-top {
+  display:flex; justify-content:space-between;
+  align-items:flex-start; gap:12px; flex-wrap:wrap;
+}
+.candidate-name { font-size:16px; overflow-wrap:anywhere; }
+.rank { color:var(--red); font:13px 'Share Tech Mono',monospace; margin-right:8px; }
+.score { color:var(--acid); font:12px 'Share Tech Mono',monospace; }
+.grounding {
+  display:inline-block; margin-top:12px;
+  font:10px 'Share Tech Mono',monospace;
+  color:var(--purple); border:1px solid #bc6bff44;
+  padding:5px 7px; text-transform:uppercase;
+}
+.evidence {
+  color:#b5a7c0; font-size:12px; line-height:1.7;
+  margin-top:10px; overflow-wrap:anywhere;
+}
+.evidence b { color:var(--cyan); font-weight:500; }
+.terminal {
+  margin-top:20px; padding:13px;
+  background:#07090a; border:1px solid #273d2c;
+  color:var(--acid); font:12px/1.8 'Share Tech Mono',monospace;
+  overflow-wrap:anywhere;
+}
+.terminal:before { content:"ROOTCAUSE://OUTPUT "; color:var(--red); }
+footer {
+  border-top:1px solid var(--line); padding:24px;
+  text-align:center; color:#74667d;
+  font:11px 'Share Tech Mono',monospace; letter-spacing:1px;
+}
+.blink { animation:blink 1.3s steps(2,start) infinite; }
+@keyframes blink { to { visibility:hidden; } }
+@media(max-width:820px) { .workspace { grid-template-columns:1fr; } }
+@media(max-width:480px) {
+  main { padding:22px 13px 45px; }
+  .stats { gap:8px; }
+  .stat { padding:12px 10px; }
+  .stat strong { font-size:23px; }
+  .stat label { font-size:9px; letter-spacing:0; }
+  h1 { letter-spacing:-1.5px; }
+  header { padding:15px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ROOTCAUSE<span class="blood">-CC</span>
+    <small>THE HAUNTED STACK // BUILD 0.1</small>
+  </div>
+  <div class="status" id="apiStatus">[ <span class="blink">●</span> CONNECTING... ]</div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="kicker">☣ INCIDENT RESPONSE DIVISION / CLASSIFIED ☣</div>
+    <h1>Something is<br> <span class="glitch">haunting</span><br>your stack.</h1>
+    <p class="subtitle">
+      Microservices are screaming. Metrics are acting suspicious.
+      Find the service responsible before the whole system descends
+      into digital hell.
+    </p>
+    <div class="stickers">
+      <span class="sticker">☠ NO SLEEP MODE</span>
+      <span class="sticker">⚠ BUGS FROM HELL</span>
+      <span class="sticker">✦ EVIDENCE OR IT DIDN'T HAPPEN</span>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat">
+      <label>☠ Entities detected</label>
+      <strong id="caseCount">---</strong>
+    </div>
+    <div class="stat">
+      <label>⌘ Haunted systems</label>
+      <strong id="systemCount">---</strong>
+    </div>
+    <div class="stat">
+      <label>⚡ Connection</label>
+      <strong id="apiMetric">???</strong>
+    </div>
+  </section>
+
+  <section class="workspace">
+    <div class="panel">
+      <div class="panel-title">
+        <h2>Summon an analysis</h2>
+        <span class="tag">RITUAL_01</span>
+      </div>
+      <p class="desc">Choose the affected system and incident. The engine will inspect the available evidence and rank potential root causes.</p>
+
+      <label for="system">01 // Choose your haunted system</label>
+      <select id="system">
+        <option value="">Summoning systems...</option>
+      </select>
+
+      <label for="caseId">02 // Select an incident</label>
+      <select id="caseId" disabled>
+        <option value="">Waiting for system...</option>
+      </select>
+
+      <label for="mode">03 // Reasoning ritual</label>
+      <select id="mode">
+        <option value="deterministic">☣ Deterministic</option>
+        <option value="llm-assisted">✦ LLM-assisted</option>
+      </select>
+
+      <button id="runButton" disabled>☠ EXORCISE THE INCIDENT ☠</button>
+      <p class="note">⚠ Analysis may call the configured LLM provider. Do not summon the API repeatedly while a ritual is in progress.</p>
+      <div id="message" class="message" role="status">Waiting for a signal from the void...</div>
+    </div>
+
+    <div class="panel">
+      <div class="result-top">
+        <div class="panel-title" style="margin:0">
+          <h2>Evidence from the void</h2>
+        </div>
+        <span class="case-pill" id="resultCase">NO CASE SELECTED</span>
+      </div>
+      <p class="desc">Ranked suspects, evidence signals, and claim-verification status appear below.</p>
+      <div id="results" aria-live="polite">
+        <div class="empty">
+          <span class="emoji">🕸️</span>
+          <strong>THE ROOM IS EMPTY.</strong>
+          <p>Select an incident and start the analysis.</p>
+          <span style="color:var(--red)">Awaiting the first victim... <span class="blink">_</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>ROOTCAUSE-CC // TRUST THE EVIDENCE, FEAR THE BUGS // ☠</footer>
+
+<script>
+const API = window.location.origin;
+const systemSelect = document.getElementById("system");
+const caseSelect = document.getElementById("caseId");
+const runButton = document.getElementById("runButton");
+const message = document.getElementById("message");
+const results = document.getElementById("results");
+let cases = [];
+let analyzing = false;
+
+function showMessage(text, isError = false) {
+  message.textContent = text;
+  message.className = "message" + (isError ? " error" : "");
+}
+
+async function getJSON(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const detail = typeof data.detail === "string"
+      ? data.detail : JSON.stringify(data.detail || data);
+    throw new Error(detail || `HTTP ${response.status}`);
+  }
+  return data;
+}
+
+function refreshCases() {
+  const filtered = cases.filter(c => c.system === systemSelect.value);
+  caseSelect.replaceChildren();
+
+  filtered.forEach(item => {
+    const option = document.createElement("option");
+    option.value = item.case_id;
+    option.textContent = `${item.case_id} // ${item.dataset_suite || "RCAEval"}`;
+    caseSelect.appendChild(option);
+  });
+
+  caseSelect.disabled = filtered.length === 0;
+  runButton.disabled = filtered.length === 0 || analyzing;
+  showMessage(filtered.length
+    ? `${filtered.length} incidents detected. Choose your target.`
+    : "No incidents found in this sector.", !filtered.length);
+}
+
+function addText(parent, tag, text, className) {
+  const element = document.createElement(tag);
+  element.textContent = text == null ? "" : String(text);
+  if (className) element.className = className;
+  parent.appendChild(element);
+  return element;
+}
+
+function renderResults(data) {
+  results.replaceChildren();
+  const result = data.result || {};
+  const candidates = result.candidates || [];
+  document.getElementById("resultCase").textContent =
+    data.case_id || result.case_id || "ANALYSIS COMPLETE";
+
+  if (!candidates.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    addText(empty, "span", "👻", "emoji");
+    addText(empty, "strong", "NO SUSPECTS FOUND");
+    addText(empty, "p", "The engine returned no ranked candidates. Check the analysis notes below.");
+    results.appendChild(empty);
+  }
+
+  candidates.forEach((item, index) => {
+    const candidate = item.candidate || {};
+    const card = document.createElement("article");
+    card.className = "candidate";
+
+    const top = document.createElement("div");
+    top.className = "candidate-top";
+    const name = document.createElement("strong");
+    name.className = "candidate-name";
+    const rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = `#${String(index + 1).padStart(2, "0")}`;
+    name.appendChild(rank);
+    name.appendChild(document.createTextNode(candidate.service || "Unknown service"));
+    top.appendChild(name);
+    addText(top, "span", `SCORE ${Number(candidate.score || 0).toFixed(4)}`, "score");
+    card.appendChild(top);
+
+    addText(card, "span", `GROUNDING // ${item.grounding_status || "unknown"}`, "grounding");
+
+    const evidence = candidate.supporting_evidence || [];
+    const evidenceLine = document.createElement("div");
+    evidenceLine.className = "evidence";
+    const evidenceLabel = document.createElement("b");
+    evidenceLabel.textContent = "EVIDENCE SIGNALS: ";
+    evidenceLine.appendChild(evidenceLabel);
+    evidenceLine.appendChild(document.createTextNode(
+      evidence.length ? evidence.join(", ") : "No supporting evidence listed"
+    ));
+    card.appendChild(evidenceLine);
+
+    const claims = [
+      ...(item.supporting_claim_ids || []).map(id => `SUPPORTED: ${id}`),
+      ...(item.contradicting_claim_ids || []).map(id => `UNSUPPORTED: ${id}`),
+      ...(item.uncertain_claim_ids || []).map(id => `UNCERTAIN: ${id}`)
+    ];
+    addText(card, "div",
+      claims.length ? claims.join(" // ") : "CLAIM STATUS: No verification claims available.",
+      "evidence");
+
+    results.appendChild(card);
+  });
+
+  if (result.notes?.length) {
+    const notes = document.createElement("div");
+    notes.className = "terminal";
+    addText(notes, "strong", "ENGINE NOTES");
+    result.notes.forEach(note => addText(notes, "div", `> ${note}`));
+    results.appendChild(notes);
+  }
+}
+
+async function loadCases() {
+  try {
+    cases = await getJSON(`${API}/api/v1/datasets`);
+    const systems = [...new Set(cases.map(c => c.system))];
+
+    document.getElementById("caseCount").textContent = cases.length;
+    document.getElementById("systemCount").textContent = systems.length;
+    document.getElementById("apiMetric").textContent = "ONLINE";
+    document.getElementById("apiStatus").textContent = "[ ● CONNECTION ESTABLISHED ]";
+
+    systemSelect.replaceChildren();
+    systems.forEach(system => {
+      const option = document.createElement("option");
+      option.value = system;
+      option.textContent = system.toUpperCase().replaceAll("-", " ");
+      systemSelect.appendChild(option);
+    });
+
+    if (!systems.length) {
+      showMessage("API connected, but no incident cases were returned.", true);
+      return;
+    }
+    refreshCases();
+  } catch (error) {
+    document.getElementById("apiStatus").textContent = "[ ✖ SIGNAL LOST ]";
+    document.getElementById("apiStatus").style.color = "var(--red)";
+    document.getElementById("apiMetric").textContent = "OFFLINE";
+    showMessage(`Connection failed: ${error.message}`, true);
+  }
+}
+
+systemSelect.addEventListener("change", refreshCases);
+
+runButton.addEventListener("click", async () => {
+  const caseId = caseSelect.value;
+  if (!caseId || analyzing) return;
+
+  analyzing = true;
+  runButton.disabled = true;
+  runButton.textContent = "☠ PERFORMING RITUAL...";
+  showMessage(`Investigating ${caseId}. Waiting for the engine...`);
+
+  results.replaceChildren();
+  const loading = document.createElement("div");
+  loading.className = "empty";
+  addText(loading, "span", "🩸", "emoji");
+  addText(loading, "strong", "THE ENGINE IS THINKING");
+  addText(loading, "p", "Gathering evidence. Do not interrupt the ritual.");
+  results.appendChild(loading);
+
+  try {
+    const data = await getJSON(
+      `${API}/api/v1/rca/${encodeURIComponent(caseId)}/analyze`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: document.getElementById("mode").value
+        })
+      }
+    );
+    renderResults(data);
+    showMessage(`Ritual complete. Results returned for ${caseId}.`);
+  } catch (error) {
+    results.replaceChildren();
+    const failure = document.createElement("div");
+    failure.className = "empty";
+    addText(failure, "span", "☠", "emoji");
+    addText(failure, "strong", "THE RITUAL FAILED");
+    addText(failure, "p", error.message, "error");
+    results.appendChild(failure);
+    showMessage(`Analysis failed: ${error.message}`, true);
+  } finally {
+    analyzing = false;
+    runButton.disabled = !caseSelect.value;
+    runButton.textContent = "☠ EXORCISE THE INCIDENT ☠";
+  }
+});
+
+loadCases();
+</script>
+</body>
+</html>
