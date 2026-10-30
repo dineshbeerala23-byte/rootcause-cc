@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     # --- RCAEval dataset foundation (Phase 3) ---
     # Directory that RCAEval suite folders (RE1/, RE2/, RE3/) are downloaded
     # into. Never committed to git — see .gitignore and scripts/download_rcaeval.sh.
-    RCAEVAL_DATA_DIR: str = "./data/rcaeval"
+    RCAEVAL_DATA_DIR: str = "../data/rcaeval-data"
 
     # Optional hard cap on how many cases discovery/listing will ever return,
     # regardless of how many exist on disk. None = no cap (full suite).

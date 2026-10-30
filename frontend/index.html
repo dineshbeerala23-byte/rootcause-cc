@@ -519,5 +519,32 @@ runButton.addEventListener("click", async () => {
 
 loadCases();
 </script>
+<section id="evaluation-panel" style="margin:24px;padding:24px;background:#101019;border:1px solid #393047;border-radius:12px;color:#f5f3ff;font-family:Arial,sans-serif">
+  <h2 style="margin-top:0;color:#ff4778">RCA Evaluation Snapshot</h2>
+  <p style="color:#aaa">Existing 10-case samples · Not full-dataset results</p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px">
+    <div style="padding:18px;background:#1a1925;border-radius:10px">
+      <h3>Online Boutique</h3>
+      <p>Top-1 <strong>20%</strong></p>
+      <p>Top-3 <strong>90%</strong></p>
+      <p>Top-5 <strong>100%</strong></p>
+    </div>
+
+    <div style="padding:18px;background:#1a1925;border-radius:10px">
+      <h3>Sock Shop</h3>
+      <p>Top-1 <strong>80%</strong></p>
+      <p>Top-3 <strong>100%</strong></p>
+      <p>Top-5 <strong>100%</strong></p>
+    </div>
+
+    <div style="padding:18px;background:#1a1925;border-radius:10px">
+      <h3>Train Ticket</h3>
+      <p>Top-1 <strong>50%</strong></p>
+      <p>Top-3 <strong>80%</strong></p>
+      <p>Top-5 <strong>80%</strong></p>
+    </div>
+  </div>
+</section>
 </body>
 </html>

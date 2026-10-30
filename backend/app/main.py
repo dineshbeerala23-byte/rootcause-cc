@@ -77,7 +77,13 @@ def create_app() -> FastAPI:
 
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
     frontend_dir = Path(__file__).resolve().parents[2] / "frontend"
-    application.mount("/ui", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+    frontend_dir = frontend_dir.resolve()
+
+    application.mount(
+        "/ui",
+        StaticFiles(directory=str(frontend_dir), html=True),
+        name="frontend",
+    )
 
     @application.get("/", tags=["Root"], summary="API root")
     async def root() -> dict:
